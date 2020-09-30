@@ -1,0 +1,7 @@
+{
+  "name": "reperage",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
