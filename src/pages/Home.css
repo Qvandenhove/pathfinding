@@ -1,0 +1,20 @@
+ion-input{
+    --background: #3dc2ff!important;
+    --placeholder-color: white!important;
+    border: black solid 1px;
+    --color: white!important
+}
+
+ion-item.map{
+    display: flex!important;
+    justify-content: center!important;
+    text-align: center!important;
+}
+
+svg{
+    margin: auto;
+}
+
+circle.end{
+    display: none;
+}

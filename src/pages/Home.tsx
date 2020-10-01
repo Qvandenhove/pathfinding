@@ -1,8 +1,7 @@
-import { IonContent, IonHeader, IonItem, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import React, { Fragment, useState } from 'react';
-import ExploreContainer from '../components/ExploreContainer';
 import './Home.css';
-import { AStarFinder, Grid } from 'pathfinding'
+import { Grid } from 'pathfinding'
 import helpers from '../helpers/helpers';
 let generation = false
 
@@ -17,32 +16,28 @@ const Home: React.FC = () => {
   const hauteur_canvas:number = 800
   const hauteur:number = 60
   const longueur:number = 60
-  var size = longueur_canvas/longueur
+  const pixel_height = hauteur_canvas/hauteur
+  const pixel_length = longueur_canvas/longueur
+  const currentX = 5
+  const currentY = 5
+  const [goTo, setGoTo] = useState([currentX, currentY])
+  var size = pixel_length
   const room_number:number = 6
-  const room_size:number = Math.round(longueur/room_number)
-  let [matrix, setMatrix] = useState([])
-  let [svg_path_string, setSvgString] = useState("")
+  const [matrix, setMatrix] = useState([])
+  const [svg_path_string, setSvgString] = useState("")
+  const [Xend, setXend] = useState(currentX)
+  const [Yend, setYend] = useState(currentY)
+  const [grid, setGrid] = useState(new Grid(0,0))
   
-  helpers.createGrid(hauteur, longueur, 6).then((value) => {
+  helpers.createGrid(hauteur, longueur, room_number).then((value) => {
     console.log(generation)
     if(generation === false){
       generation = true
       setMatrix(value)
-      let grid = new Grid(transpose(value))
-      let finder = new AStarFinder()
-      let path = finder.findPath(5,5,51,50, grid)
-      console.log(value)
-      console.log(path)
-      let svg_path = []
-      svg_path.push(`M${path[0][0] * size + size/2} ${path[0][1] * size + size/2}`)
-      for(let i = 1;i < path.length; i++){
-        svg_path.push(`L${path[i][0] * size + size/2} ${path[i][1] * size + size/2}`)
-      }
-      setSvgString(svg_path.join(" "))
-        
+      setGrid(new Grid(transpose(value)))
     }
   })
-  
+
   
   
   return (
@@ -58,7 +53,7 @@ const Home: React.FC = () => {
             <IonTitle size="large">Blank</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonItem>
+        <IonItem className="map">
           <svg width={longueur_canvas} height={hauteur_canvas}>
             {matrix.map((line:any, index:number) => {
               let svg_line = line.map((cell:any, index_h:any) => {
@@ -68,14 +63,35 @@ const Home: React.FC = () => {
                 }else{
                   cell_value = "black"
                 }
-                return <rect x={index * (longueur_canvas/longueur)} y={index_h*(hauteur_canvas/hauteur)} width={longueur_canvas/longueur} height={hauteur_canvas/hauteur} stroke="black" stroke-width="1" fill={cell_value} />
+                return <rect x={index * (pixel_length)} y={index_h*(pixel_height)} width={pixel_length} height={pixel_height} stroke="black" stroke-width="1" fill={cell_value} />
               })
             return <Fragment>{svg_line}</Fragment>
             })}
+            <text fill="blue" x={currentX * pixel_length - 40} y={currentY * pixel_height - pixel_height}>Vous êtes ici</text>
+            <circle className="start" fill="green" cx={currentX * pixel_length - pixel_length / 2} cy={currentY * pixel_height - pixel_height / 2} r={pixel_length/2}/>
+            <circle className="end" fill="red" cx={(goTo[0] + 1) * pixel_length - pixel_length / 2} cy={(goTo[1] + 1) * pixel_height - pixel_height / 2} r={pixel_length/2} />
             <path fill="none" stroke-width="3" stroke="#ffff00" d={svg_path_string} />
           </svg>
         </IonItem>
-        
+        <IonItem color="primary">
+          <IonInput onIonChange={(e) => {if (e.detail.value){setXend(parseInt(e.detail.value))}}} name="WantedX" type="number" placeholder="X cherché" />
+          <IonInput  onIonChange={(e) => {if (e.detail.value){setYend(parseInt(e.detail.value))}}} name="WantedY" type="number" placeholder="YCherché"/>
+          <IonButton onClick={() => {helpers.searchPath(currentX, currentY, Xend, Yend, grid.clone()).then((path_value) => {
+            let svg_path = []
+            let path = path_value
+            if (path[0]){
+              svg_path.push(`M${path[0][0] * size + size/2} ${path[0][1] * size + size/2}`)
+              for(let i = 1;i < path.length; i++){
+                svg_path.push(`L${path[i][0] * size + size/2} ${path[i][1] * size + size/2}`)
+                setSvgString(svg_path.join(" "))
+                console.log(svg_path_string)
+                setGoTo([Xend, Yend])
+                document.querySelector("circle.end")?.classList.remove("end")
+              }
+            }
+            
+          })}} type="submit">Chercher</IonButton>
+        </IonItem>
       </IonContent>
     </IonPage>
   );
