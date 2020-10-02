@@ -12,16 +12,15 @@ function transpose(array:any) {
 }
 
 const Home: React.FC = () => {
-  const longueur_canvas:number = 800
-  const hauteur_canvas:number = 800
-  const hauteur:number = 60
-  const longueur:number = 60
+  const longueur_canvas:number = Math.round(window.innerWidth * (2/3))
+  const hauteur_canvas:number = window.innerHeight
+  const hauteur:number = 100
+  const longueur:number = 100
   const pixel_height = hauteur_canvas/hauteur
   const pixel_length = longueur_canvas/longueur
   const currentX = 5
   const currentY = 5
   const [goTo, setGoTo] = useState([currentX, currentY])
-  var size = pixel_length
   const room_number:number = 6
   const [matrix, setMatrix] = useState([])
   const [svg_path_string, setSvgString] = useState("")
@@ -30,7 +29,7 @@ const Home: React.FC = () => {
   const [grid, setGrid] = useState(new Grid(0,0))
   
   helpers.createGrid(hauteur, longueur, room_number).then((value) => {
-    console.log(generation)
+    console.log("generation grille")
     if(generation === false){
       generation = true
       setMatrix(value)
@@ -63,7 +62,7 @@ const Home: React.FC = () => {
                 }else{
                   cell_value = "black"
                 }
-                return <rect x={index * (pixel_length)} y={index_h*(pixel_height)} width={pixel_length} height={pixel_height} stroke="black" stroke-width="1" fill={cell_value} />
+                return <rect x={index * (pixel_length)} y={index_h*(pixel_height)} width={pixel_length} height={pixel_height} stroke="black" stroke-width="0" fill={cell_value} />
               })
             return <Fragment>{svg_line}</Fragment>
             })}
@@ -77,17 +76,17 @@ const Home: React.FC = () => {
           <IonInput onIonChange={(e) => {if (e.detail.value){setXend(parseInt(e.detail.value))}}} name="WantedX" type="number" placeholder="X cherché" />
           <IonInput  onIonChange={(e) => {if (e.detail.value){setYend(parseInt(e.detail.value))}}} name="WantedY" type="number" placeholder="YCherché"/>
           <IonButton onClick={() => {helpers.searchPath(currentX, currentY, Xend, Yend, grid.clone()).then((path_value) => {
+            console.log("search")
             let svg_path = []
             let path = path_value
             if (path[0]){
-              svg_path.push(`M${path[0][0] * size + size/2} ${path[0][1] * size + size/2}`)
+              svg_path.push(`M${path[0][0] * pixel_length + pixel_length/2} ${path[0][1] * pixel_height + pixel_height/2}`)
               for(let i = 1;i < path.length; i++){
-                svg_path.push(`L${path[i][0] * size + size/2} ${path[i][1] * size + size/2}`)
-                setSvgString(svg_path.join(" "))
-                console.log(svg_path_string)
-                setGoTo([Xend, Yend])
-                document.querySelector("circle.end")?.classList.remove("end")
+                svg_path.push(`L${path[i][0] * pixel_length + pixel_length/2} ${path[i][1] * pixel_height + pixel_height/2}`)
               }
+              setSvgString(svg_path.join(" "))
+              setGoTo([Xend, Yend])
+              document.querySelector("circle.end")?.classList.remove("end")
             }
             
           })}} type="submit">Chercher</IonButton>

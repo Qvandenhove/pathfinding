@@ -3,6 +3,7 @@ import { AStarFinder, Grid } from 'pathfinding'
 const helpers = {
     async createGrid(height:number, length:number, roomsNumber:number){
         const room_length = Math.round(length/roomsNumber)
+        // const room_height = Math.round(height/1)
         let matrix:any = []
         for(let i=0;i<height;i++){
             matrix.push([])
