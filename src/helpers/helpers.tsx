@@ -1,4 +1,17 @@
 import { AStarFinder, Grid } from 'pathfinding'
+import firebase from 'firebase'
+
+var firebaseConfig = {
+  apiKey: "AIzaSyAr2ARyw2PBu7i9l_dvRAgl3X4cgE0Voi4",
+  authDomain: "satisfaction-7bbc4.firebaseapp.com",
+  databaseURL: "https://satisfaction-7bbc4.firebaseio.com",
+  projectId: "satisfaction-7bbc4",
+  storageBucket: "satisfaction-7bbc4.appspot.com",
+  messagingSenderId: "88882724595",
+  appId: "1:88882724595:web:bedad5758bec2ce8420186"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore()
 
 const helpers = {
     async createGrid(height:number, length:number, roomsNumber:number){
@@ -37,6 +50,25 @@ const helpers = {
         path = "Impossible de trouver le chemin"
       }
       return path
+    },
+
+    async getWaypoints(){
+      let wayPointsList = await db.collection("Waypoints").get()
+      let WayPoints:any = []
+      wayPointsList.forEach((wayPoint) => {
+        WayPoints.push({datas: wayPoint.data(), id: wayPoint.id})
+      })
+      return WayPoints
+    },
+
+    async addWayPoint(X:number, Y:number, name:string, label:string, color:string){
+      db.collection("Waypoints").doc().set({
+        "X": X,
+        "Y": Y,
+        "name": name,
+        "color":color,
+        "label": label
+      })
     }
 }
 

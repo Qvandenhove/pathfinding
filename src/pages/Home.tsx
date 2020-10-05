@@ -1,9 +1,10 @@
-import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonPage, IonPopover, IonTitle, IonToolbar } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonPage, IonPopover, IonTitle, IonToolbar } from '@ionic/react';
 import React, { Fragment, useState } from 'react';
 import './Home.css';
 import { Grid } from 'pathfinding'
 import helpers from '../helpers/helpers';
 let generation = false
+let gotWaypoints = false
 
 function transpose(array:any) {
   return array.reduce((prev:any, next:any) => next.map((item:any, i:any) =>
@@ -12,6 +13,7 @@ function transpose(array:any) {
 }
 
 const Home: React.FC = () => {
+  let line_key = 0
   let [errorPopover, setErrorPopover] = useState(false)
   const longueur_canvas:number = Math.round(window.innerWidth * (2/3))
   const hauteur_canvas:number = window.innerHeight
@@ -28,7 +30,20 @@ const Home: React.FC = () => {
   const [Xend, setXend] = useState(currentX)
   const [Yend, setYend] = useState(currentY)
   const [grid, setGrid] = useState(new Grid(0,0))
-  
+  // Add Waypoints useStates
+  const [wpName, setWpName] = useState("")
+  const [wpLabel, setWpLabel] = useState("")
+  const [wpColor, setWpColor] = useState("")
+  const [Waypoints, setWaypoints] = useState([])
+  function updateWaypoints(){
+    helpers.getWaypoints().then((value) => {
+      if(!gotWaypoints){
+        setWaypoints(value)
+        gotWaypoints = true
+      }
+    })
+  }
+  updateWaypoints()
   helpers.createGrid(hauteur, longueur, room_number).then((value) => {
     if(generation === false){
       generation = true
@@ -62,37 +77,35 @@ const Home: React.FC = () => {
                 }else{
                   cell_value = "black"
                 }
-                return <rect x={index * (pixel_length)} y={index_h*(pixel_height)} width={pixel_length} height={pixel_height} stroke="black" stroke-width="0" fill={cell_value} />
+                return <rect key={`${index} - ${index_h}`} x={index * (pixel_length)} y={index_h*(pixel_height)} width={pixel_length} height={pixel_height} stroke="black" strokeWidth="0" fill={cell_value} />
               })
-            return <Fragment>{svg_line}</Fragment>
+              line_key++
+            return <Fragment key={`line - ${line_key}`}>{svg_line}</Fragment>
             })}
-            <text fill="blue" x={currentX * pixel_length - 40} y={currentY * pixel_height - pixel_height}>Vous êtes ici</text>
-            <circle className="start" fill="green" cx={currentX * pixel_length - pixel_length / 2} cy={currentY * pixel_height - pixel_height / 2} r={pixel_length/2}/>
+            {Waypoints.map((WayPoint:any) => {
+              return <Fragment key={WayPoint.id}>
+                <text fill="blue" x={WayPoint.datas.X * pixel_length - 40} y={WayPoint.datas.Y * pixel_height - pixel_height}>{WayPoint.datas.label}</text>
+                <circle fill={WayPoint.datas.color} cx={WayPoint.datas.X * pixel_length - pixel_length / 2} cy={WayPoint.datas.Y * pixel_height - pixel_height / 2} r={pixel_length/2}/>
+              </Fragment>
+            })}
             <circle className="end" fill="red" cx={(goTo[0] + 1) * pixel_length - pixel_length / 2} cy={(goTo[1] + 1) * pixel_height - pixel_height / 2} r={pixel_length/2} />
-            <path fill="none" stroke-width="3" stroke="#ffff00" d={svg_path_string} />
+            <path fill="none" strokeWidth="3" stroke="#ffff00" d={svg_path_string} />
           </svg>
         </IonItem>
         <IonItem color="primary">
-          <IonInput onIonChange={(e) => {if (e.detail.value){setXend(parseInt(e.detail.value))}}} name="WantedX" type="number" placeholder="X cherché" />
-          <IonInput  onIonChange={(e) => {if (e.detail.value){setYend(parseInt(e.detail.value))}}} name="WantedY" type="number" placeholder="YCherché"/>
-          <IonButton onClick={() => {helpers.searchPath(currentX, currentY, Xend, Yend, longueur, hauteur, room_number, grid.clone()).then((path_value) => {
-            let svg_path = []
-            let path:any = path_value
-            if (typeof(path) !== "string"){
-              svg_path.push(`M${path[0][0] * pixel_length + pixel_length/2} ${path[0][1] * pixel_height + pixel_height/2}`)
-              for(let i = 1;i < path.length; i++){
-                svg_path.push(`L${path[i][0] * pixel_length + pixel_length/2} ${path[i][1] * pixel_height + pixel_height/2}`)
-              }
-              setSvgString(svg_path.join(" "))
-              setGoTo([Xend, Yend])
-              document.querySelector("circle.end")?.classList.remove("end")
-            }else{
-              console.log("erreur")
-              setErrorPopover(true)
-              setTimeout(() => {setErrorPopover(false)}, 2000)
-            }
-            
-          })}} type="submit">Chercher</IonButton>
+          <IonLabel position="fixed">Ajouter un point de passage : </IonLabel>
+          <IonItem>
+            <IonInput onIonChange={(e) => {if (e.detail.value){setXend(parseInt(e.detail.value))}}} name="WantedX" type="number" placeholder="X cherché" />
+            <IonInput  onIonChange={(e) => {if (e.detail.value){setYend(parseInt(e.detail.value))}}} name="WantedY" type="number" placeholder="YCherché"/>
+            <IonInput onIonChange={(e) => {if(e.detail.value){setWpName(e.detail.value)}}} name="name" type="text" placeholder="Nom du point" />
+            <IonInput onIonChange={(e) => {if(e.detail.value){setWpLabel(e.detail.value)}}} name="label" type="text" placeholder="Label du point"/>
+            <IonInput onIonChange={(e) => {if(e.detail.value){setWpLabel(e.detail.value)}}} name="color" type="text" placeholder="Couleur du point"/>
+          </IonItem>
+          <IonButton onClick={() => {
+            helpers.addWayPoint(Xend, Yend, wpName, wpLabel, wpColor)
+            gotWaypoints = false
+            updateWaypoints()
+            }} type="submit">Chercher</IonButton>
         </IonItem>
         <IonPopover showBackdrop={false} cssClass="error" isOpen={errorPopover}>Les coordonnées saisies sont dans un mur impossible de trouver un chemin.</IonPopover>
       </IonContent>

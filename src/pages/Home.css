@@ -29,3 +29,8 @@ ion-popover.error div.popover-wrapper div.popover-content{
     width: auto!important;
     padding: 10px;
 }
+
+ion-label{
+    min-width: 202px!important;
+    max-width: 202px!important;
+}
