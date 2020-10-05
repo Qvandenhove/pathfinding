@@ -1,4 +1,4 @@
-import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonPage, IonPopover, IonTitle, IonToolbar } from '@ionic/react';
 import React, { Fragment, useState } from 'react';
 import './Home.css';
 import { Grid } from 'pathfinding'
@@ -12,6 +12,7 @@ function transpose(array:any) {
 }
 
 const Home: React.FC = () => {
+  let [errorPopover, setErrorPopover] = useState(false)
   const longueur_canvas:number = Math.round(window.innerWidth * (2/3))
   const hauteur_canvas:number = window.innerHeight
   const hauteur:number = 100
@@ -29,7 +30,6 @@ const Home: React.FC = () => {
   const [grid, setGrid] = useState(new Grid(0,0))
   
   helpers.createGrid(hauteur, longueur, room_number).then((value) => {
-    console.log("generation grille")
     if(generation === false){
       generation = true
       setMatrix(value)
@@ -75,11 +75,10 @@ const Home: React.FC = () => {
         <IonItem color="primary">
           <IonInput onIonChange={(e) => {if (e.detail.value){setXend(parseInt(e.detail.value))}}} name="WantedX" type="number" placeholder="X cherché" />
           <IonInput  onIonChange={(e) => {if (e.detail.value){setYend(parseInt(e.detail.value))}}} name="WantedY" type="number" placeholder="YCherché"/>
-          <IonButton onClick={() => {helpers.searchPath(currentX, currentY, Xend, Yend, grid.clone()).then((path_value) => {
-            console.log("search")
+          <IonButton onClick={() => {helpers.searchPath(currentX, currentY, Xend, Yend, longueur, hauteur, room_number, grid.clone()).then((path_value) => {
             let svg_path = []
-            let path = path_value
-            if (path[0]){
+            let path:any = path_value
+            if (typeof(path) !== "string"){
               svg_path.push(`M${path[0][0] * pixel_length + pixel_length/2} ${path[0][1] * pixel_height + pixel_height/2}`)
               for(let i = 1;i < path.length; i++){
                 svg_path.push(`L${path[i][0] * pixel_length + pixel_length/2} ${path[i][1] * pixel_height + pixel_height/2}`)
@@ -87,10 +86,15 @@ const Home: React.FC = () => {
               setSvgString(svg_path.join(" "))
               setGoTo([Xend, Yend])
               document.querySelector("circle.end")?.classList.remove("end")
+            }else{
+              console.log("erreur")
+              setErrorPopover(true)
+              setTimeout(() => {setErrorPopover(false)}, 2000)
             }
             
           })}} type="submit">Chercher</IonButton>
         </IonItem>
+        <IonPopover showBackdrop={false} cssClass="error" isOpen={errorPopover}>Les coordonnées saisies sont dans un mur impossible de trouver un chemin.</IonPopover>
       </IonContent>
     </IonPage>
   );

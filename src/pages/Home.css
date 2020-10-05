@@ -18,3 +18,14 @@ svg{
 circle.end{
     display: none;
 }
+
+ion-popover.error{
+    --background: #eb445a;
+}
+
+ion-popover.error div.popover-wrapper div.popover-content{
+    top: 94%!important;
+    margin: auto;
+    width: auto!important;
+    padding: 10px;
+}
