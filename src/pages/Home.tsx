@@ -1,10 +1,11 @@
-import { IonButton, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonPage, IonPopover, IonTitle, IonToolbar } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonItem, IonList, IonMenu, IonMenuButton, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import React, { Fragment, useState } from 'react';
 import './Home.css';
 import { Grid } from 'pathfinding'
 import helpers from '../helpers/helpers';
+import AddWayPoint from '../components/addWaypoint';
+import AskPoints from '../components/askPoints';
 let generation = false
-let gotWaypoints = false
 
 function transpose(array:any) {
   return array.reduce((prev:any, next:any) => next.map((item:any, i:any) =>
@@ -14,36 +15,24 @@ function transpose(array:any) {
 
 const Home: React.FC = () => {
   let line_key = 0
-  let [errorPopover, setErrorPopover] = useState(false)
-  const longueur_canvas:number = Math.round(window.innerWidth * (2/3))
-  const hauteur_canvas:number = window.innerHeight
+  const longueur_canvas:number = window.innerWidth < 720 ? window.innerWidth * (9/10) : Math.round(window.innerWidth * (2/3))
+  const hauteur_canvas:number = window.innerHeight * (8/10)
   const hauteur:number = 100
   const longueur:number = 100
   const pixel_height = hauteur_canvas/hauteur
   const pixel_length = longueur_canvas/longueur
   const currentX = 5
   const currentY = 5
-  const [goTo, setGoTo] = useState([currentX, currentY])
   const room_number:number = 6
   const [matrix, setMatrix] = useState([])
+  const [fromPoint, setFromPoint] = useState("")
+  const [toPoint, setToPoint] = useState("")
   const [svg_path_string, setSvgString] = useState("")
-  const [Xend, setXend] = useState(currentX)
-  const [Yend, setYend] = useState(currentY)
+  
   const [grid, setGrid] = useState(new Grid(0,0))
   // Add Waypoints useStates
-  const [wpName, setWpName] = useState("")
-  const [wpLabel, setWpLabel] = useState("")
-  const [wpColor, setWpColor] = useState("")
   const [Waypoints, setWaypoints] = useState([])
-  function updateWaypoints(){
-    helpers.getWaypoints().then((value) => {
-      if(!gotWaypoints){
-        setWaypoints(value)
-        gotWaypoints = true
-      }
-    })
-  }
-  updateWaypoints()
+
   helpers.createGrid(hauteur, longueur, room_number).then((value) => {
     if(generation === false){
       generation = true
@@ -52,13 +41,30 @@ const Home: React.FC = () => {
     }
   })
 
+  async function goToWayPoint(startPoint:string, endPoint:string){
+    let startDatas = await helpers.getWaypoint(startPoint)
+    let endDatas = await helpers.getWaypoint(toPoint)
+    if(startDatas && endDatas){
+      let path:any = await helpers.searchPath(startDatas.X, startDatas.Y, endDatas.X, endDatas.Y, grid.clone())
+      let svg_path = []
+      if (typeof(path) !== "string"){
+        svg_path.push(`M${path[0][0] * pixel_length + pixel_length/2} ${path[0][1] * pixel_height + pixel_height/2}`)
+        for(let i = 1;i < path.length; i++){
+          svg_path.push(`L${path[i][0] * pixel_length + pixel_length/2} ${path[i][1] * pixel_height + pixel_height/2}`)
+        }
+        setSvgString(svg_path.join(" "))
+      }
+    }
+  }
   
   
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Blank</IonTitle>
+        <IonItem lines="none" color="white">
+          <IonTitle>Carte du Bâtiment</IonTitle>
+        </IonItem>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
@@ -84,30 +90,18 @@ const Home: React.FC = () => {
             })}
             {Waypoints.map((WayPoint:any) => {
               return <Fragment key={WayPoint.id}>
-                <text fill="blue" x={WayPoint.datas.X * pixel_length - 40} y={WayPoint.datas.Y * pixel_height - pixel_height}>{WayPoint.datas.label}</text>
+                <text fill="blue" x={WayPoint.datas.X * pixel_length - 40 > 0 ? WayPoint.datas.X * pixel_length - 40: 0} y={WayPoint.datas.Y * pixel_height - pixel_height}>{WayPoint.datas.label}</text>
                 <circle fill={WayPoint.datas.color} cx={WayPoint.datas.X * pixel_length - pixel_length / 2} cy={WayPoint.datas.Y * pixel_height - pixel_height / 2} r={pixel_length/2}/>
               </Fragment>
             })}
-            <circle className="end" fill="red" cx={(goTo[0] + 1) * pixel_length - pixel_length / 2} cy={(goTo[1] + 1) * pixel_height - pixel_height / 2} r={pixel_length/2} />
             <path fill="none" strokeWidth="3" stroke="#ffff00" d={svg_path_string} />
           </svg>
         </IonItem>
-        <IonItem color="primary">
-          <IonLabel position="fixed">Ajouter un point de passage : </IonLabel>
-          <IonItem>
-            <IonInput onIonChange={(e) => {if (e.detail.value){setXend(parseInt(e.detail.value))}}} name="WantedX" type="number" placeholder="X cherché" />
-            <IonInput  onIonChange={(e) => {if (e.detail.value){setYend(parseInt(e.detail.value))}}} name="WantedY" type="number" placeholder="YCherché"/>
-            <IonInput onIonChange={(e) => {if(e.detail.value){setWpName(e.detail.value)}}} name="name" type="text" placeholder="Nom du point" />
-            <IonInput onIonChange={(e) => {if(e.detail.value){setWpLabel(e.detail.value)}}} name="label" type="text" placeholder="Label du point"/>
-            <IonInput onIonChange={(e) => {if(e.detail.value){setWpLabel(e.detail.value)}}} name="color" type="text" placeholder="Couleur du point"/>
-          </IonItem>
-          <IonButton onClick={() => {
-            helpers.addWayPoint(Xend, Yend, wpName, wpLabel, wpColor)
-            gotWaypoints = false
-            updateWaypoints()
-            }} type="submit">Chercher</IonButton>
+        <IonItem lines="none" className="centered searchPoints">
+          <AskPoints waypoints={Waypoints} setFromPoint={setFromPoint} setToPoint={setToPoint} />
+          <IonButton onClick={() => {goToWayPoint(fromPoint, toPoint)}}>Chercher le chemin</IonButton>
         </IonItem>
-        <IonPopover showBackdrop={false} cssClass="error" isOpen={errorPopover}>Les coordonnées saisies sont dans un mur impossible de trouver un chemin.</IonPopover>
+        <AddWayPoint wpSetter={setWaypoints} hauteur={hauteur} longueur={longueur} roomsNumber={room_number} />
       </IonContent>
     </IonPage>
   );

@@ -37,18 +37,10 @@ const helpers = {
         return matrix
     },
 
-    async searchPath(xStart:number, yStart:number, xEnd:number, yEnd:number, length:number, height:number, rooms_number:number, grid:Grid) {
+    async searchPath(xStart:number, yStart:number, xEnd:number, yEnd:number, grid:Grid) {
       let finder = new AStarFinder()
-      let room_length = Math.round(length / rooms_number)
-      let isBuildingWall = (xEnd === 0 || yEnd === 0 || xEnd === length - 1 || yEnd === height - 1)
-      let isRoomWall = ((yEnd === height / 2 + 1 || yEnd === height / 2 - 1 || xEnd % room_length === 0) && (yEnd !== height / 2))
       let path
-      if (!isBuildingWall && !isRoomWall){
-        path = finder.findPath(xStart, yStart, xEnd, yEnd, grid)
-      }
-      else{
-        path = "Impossible de trouver le chemin"
-      }
+      path = finder.findPath(xStart, yStart, xEnd, yEnd, grid)
       return path
     },
 
@@ -61,15 +53,34 @@ const helpers = {
       return WayPoints
     },
 
-    async addWayPoint(X:number, Y:number, name:string, label:string, color:string){
-      db.collection("Waypoints").doc().set({
-        "X": X,
-        "Y": Y,
-        "name": name,
-        "color":color,
-        "label": label
-      })
-    }
+    async getWaypoint(pointId:string){
+      let waypoint
+      if(pointId !== ""){
+        waypoint = await (await db.collection("Waypoints").doc(pointId).get()).data()
+      }else{
+        return
+      }
+      return waypoint
+    },
+    async addWayPoint(X:number, Y:number, label:string, color:string, height:number, length:number, roomsNumber:number){
+      const room_length = Math.round(length/roomsNumber)
+      let isBuildingWall = (X - 1 === 0 || Y - 1 === 0 || X - 1 === length - 1 || Y - 1 === height - 1)
+      let isBuildingDoor = (Y - 1 === height/2 && X - 1 === 0)
+      let isRoomWall = ((Y - 1 === height / 2 + 1 || Y - 1 === height / 2 - 1 || X - 1 % room_length === 0) && (Y - 1 !== height / 2))
+      let isRoomDoor = (X - 1 % room_length === 1 && Y - 1 !== 0 && X - 1!== 0 && Y - 1 !== length - 1 && X - 1 !== height - 1)
+      if (((!isBuildingWall && !isRoomWall) || isBuildingDoor || isRoomDoor) && label && color && height > 0 && length > 0 && roomsNumber > 0){
+        await db.collection("Waypoints").doc().set({
+          "X": X,
+          "Y": Y,
+          "color":color,
+          "label": label
+        })
+        return true
+      }else{
+        return false
+      }
+        
+      }
 }
 
 export default helpers

@@ -34,3 +34,24 @@ ion-label{
     min-width: 202px!important;
     max-width: 202px!important;
 }
+
+ion-menu ion-list ion-item{
+    cursor: pointer!important;
+}
+
+.centered{
+    margin: auto;
+}
+
+text{
+    font-size: 1.2rem;
+}
+
+ion-select{
+    min-width: 45%!important;
+    max-width: 45%!important;
+}
+
+ion-item.searchPoints{
+    width: 100%;
+}
