@@ -89,8 +89,22 @@ const Home: React.FC = () => {
             return <Fragment key={`line - ${line_key}`}>{svg_line}</Fragment>
             })}
             {Waypoints.map((WayPoint:any) => {
+              let labelX, labelY
+              if (WayPoint.datas.X > longueur / 2 && WayPoint.datas.Y > hauteur / 2){
+                labelX = WayPoint.datas.X * pixel_length - (WayPoint.datas.label.length * 5)
+                labelY = WayPoint.datas.Y * pixel_height - 15
+              }else if (WayPoint.datas.X <= longueur / 2 && WayPoint.datas.Y <= hauteur / 2){
+                labelX = WayPoint.datas.X * pixel_length + (WayPoint.datas.label.length * 5)
+                labelY = WayPoint.datas.Y * pixel_height + 15
+              }else if (WayPoint.datas.X <= longueur / 2 && WayPoint.datas.Y > hauteur / 2){
+                labelX = WayPoint.datas.X * pixel_length + (WayPoint.datas.label.length * 5)
+                labelY = WayPoint.datas.Y * pixel_height - 15
+              }else if (WayPoint.datas.X > longueur / 2 && WayPoint.datas.Y <= hauteur / 2){
+                labelX = WayPoint.datas.X * pixel_length - (WayPoint.datas.label.length * 5)
+                labelY = WayPoint.datas.Y * pixel_height + 15
+              }
               return <Fragment key={WayPoint.id}>
-                <text fill="blue" x={WayPoint.datas.X * pixel_length - 40 > 0 ? WayPoint.datas.X * pixel_length - 40: 0} y={WayPoint.datas.Y * pixel_height - pixel_height}>{WayPoint.datas.label}</text>
+                <text fill="blue" x={labelX} y={labelY}>{WayPoint.datas.label}</text>
                 <circle fill={WayPoint.datas.color} cx={WayPoint.datas.X * pixel_length - pixel_length / 2} cy={WayPoint.datas.Y * pixel_height - pixel_height / 2} r={pixel_length/2}/>
               </Fragment>
             })}

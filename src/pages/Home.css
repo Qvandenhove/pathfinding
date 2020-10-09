@@ -45,6 +45,7 @@ ion-menu ion-list ion-item{
 
 text{
     font-size: 1.2rem;
+    max-width: 100px!important;
 }
 
 ion-select{
