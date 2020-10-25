@@ -48,11 +48,16 @@ text{
     max-width: 100px!important;
 }
 
-ion-select{
-    min-width: 45%!important;
-    max-width: 45%!important;
-}
+/* ion-select{
+    min-width: 40%!important;
+    max-width: 40%!important;
+} */
 
 ion-item.searchPoints{
     width: 100%;
+}
+
+ion-button.searchPath{
+    min-width: 10%!important;
+    max-width: 10%!important;
 }
